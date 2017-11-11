@@ -1,22 +1,25 @@
 # falcon-jsonify
 
- [Falcon](https://github.com/falconry/falcon) middleware to serialize/deserialize JSON with built-in request validator. **Compatible with Python 3 and 2.**
+ [Falcon](https://github.com/falconry/falcon) middleware to serialize/deserialize JSON with built-in request validator.
 
-This is a fork that adds **actual** support for Python 3, and a few fixes.
+This is a fork based on [Andrei Reigani's falcon-jsonify](https://github.com/AndreiRegiani/falcon-jsonify) that adds **actual** support for Python 3, and a few fixes. As for the moment, you have to clone this repository into your project or submodule it.
 
 ```shell
-$ pip install falcon-jsonify
+$ git clone https://github.com/Pisay127/falcon-jsonify.git
+$ # or you can submodule this project
+$ git submodule add https://github.com/Pisay127/falcon-jsonify.git
 ```
 
-Add the middleware into your app:
+## Getting Started
+
+### Registering `falcon-jsonify`
+In order for your project to use `falcon-jsonify`, we must first register this middleware.
 
 ```python
 import falcon_jsonify
 
 falcon.API(middleware=[falcon_jsonify.Middleware(help_messages=True)])
 ```
-
-## Getting Started
 
 
 ### Responses
