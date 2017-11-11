@@ -55,7 +55,7 @@ req.get_json('approved', data_type=bool)
 
 ```python
 # make a field optional with default value
-req.get_json('country_code', data_type=str, default="USA", max=3, min=3)
+req.get_json('country_code', data_type=str, default="USA", max_value=3, min_value=3)
 
 # custom validation with Regular Expressions
 req.get_json('email', match="[^@]+@[^@]+\.[^@]+")
