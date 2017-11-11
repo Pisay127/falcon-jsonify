@@ -1,18 +1,24 @@
 import json
 import re
+import sys
 
 import falcon
 
 
 class Middleware(object):
-
     def __init__(self, help_messages=True):
         """
-        help_messages: display validation/error messages in the response in
-                       case of bad requests
+        help_messages: display validation/error messages in the response in case of bad requests
         """
         self.debug = bool(help_messages)
+        self.req = None
 
+        if sys.version_info[0] == 3:
+            # We are running under Python 3.x.
+            self.pystring = str
+        else:
+            # We are running under Python 2.x.
+            self.pystring = unicode
 
     def bad_request(self, title, description):
         """
@@ -23,8 +29,7 @@ class Middleware(object):
         else:
             raise falcon.HTTPBadRequest()
 
-
-    def get_json(self, field, **validators):
+    def get_json(self, field, default=None, **validators):
         """
         Helper to access JSON fields in the request body
         Optional built-in validators
@@ -33,61 +38,50 @@ class Middleware(object):
 
         if default:
             value = default
-
-        elif not field in self.req.json:
-            self.bad_request("Missing JSON field",
-                             "Field '{}' is required".format(field))
+        elif field not in self.req.json:
+            self.bad_request("Missing JSON field", "Field '{}' is required".format(field))
         else:
             value = self.req.json[field]
 
-        return validate(value, **validators)
+        return self._validate(field, value, **validators)
 
-
-    def validate(self, value, dtype=None, default=None, min=None, max=None, match=None):
+    def _validate(self, field, value, data_type=None, min_value=None, max_value=None, match=None):
         """
         JSON field validators:
 
-        dtype      data type
+        data_type  data type
         default    value used if field is not provided in the request body
-        min        minimum length (str) or value (int, float)
-        max        maximum length (str) or value (int, float)
+        min_value  minimum length (str) or value (int, float)
+        max_value  maximum length (str) or value (int, float)
         match      regular expression
         """
         err_title = "Validation error"
 
-        if dtype:
-            if dtype == str and type(value) == unicode:
+        if data_type:
+            if data_type == str and type(value) == self.pystring:
                 pass
 
-            elif type(value) is not dtype:
+            elif type(value) is not data_type:
                 msg = "Data type for '{}' is '{}' but should be '{}'"
-                self.bad_request(err_title,
-                                 msg.format(field, type(value).__name__,  dtype.__name__))
+                self.bad_request(err_title, msg.format(field, type(value).__name__, data_type.__name__))
 
-        if type(value) == unicode:
-            if min and len(value) < min:
-                self.bad_request(err_title,
-                                 "Minimum length for '{}' is '{}'".format(field, min))
+        if type(value) == self.pystring:
+            if min_value and len(value) < min_value:
+                self.bad_request(err_title, "Minimum length for '{}' is '{}'".format(field, min_value))
 
-            if max and len(value) > max:
-                self.bad_request(err_title,
-                                 "Maximum length for '{}' is '{}'".format(field, max))
-
+            if max_value and len(value) > max_value:
+                self.bad_request(err_title, "Maximum length for '{}' is '{}'".format(field, max_value))
         elif type(value) in (int, float):
-            if min and value < min:
-                self.bad_request(err_title,
-                                 "Minimum value for '{}' is '{}'".format(field, min))
+            if min_value and value < min_value:
+                self.bad_request(err_title, "Minimum value for '{}' is '{}'".format(field, min_value))
 
-            if max and value > max:
-                self.bad_request(err_title,
-                                 "Maximum value for '{}' is '{}'".format(field, max))
+            if max_value and value > max_value:
+                self.bad_request(err_title, "Maximum value for '{}' is '{}'".format(field, max_value))
 
         if match and not re.match(match, re.escape(value)):
-            self.bad_request(err_title,
-                             "'{}' does not match Regex: {}".format(field, match))
+            self.bad_request(err_title, "'{}' does not match Regex: {}".format(field, match))
 
         return value
-
 
     def process_request(self, req, resp):
         """
@@ -103,13 +97,10 @@ class Middleware(object):
 
         try:
             req.json = json.loads(body.decode('utf-8'))
-
         except ValueError:
             self.bad_request("Malformed JSON", "Syntax error")
-
         except UnicodeDecodeError:
             self.bad_request("Invalid encoding", "Could not decode as UTF-8")
-
 
     def process_response(self, req, resp, resource, req_succeeded):
         """

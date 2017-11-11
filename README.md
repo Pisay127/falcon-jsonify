@@ -2,6 +2,8 @@
 
  [Falcon](https://github.com/falconry/falcon) middleware to serialize/deserialize JSON with built-in request validator. **Compatible with Python 3 and 2.**
 
+This is a fork that adds **actual** support for Python 3, and a few fixes.
+
 ```shell
 $ pip install falcon-jsonify
 ```
@@ -37,10 +39,10 @@ value = req.get_json('my_field')  # required field
 * `dtype`, `min`, `max`
 
 ```python
-req.get_json('name', dtype=str, min=1, max=16)  # min/max char length
-req.get_json('age', dtype=int, min=18, max=99)  # min/max numeric value
-req.get_json('amount', dtype=float, min=0.0)
-req.get_json('approved', dtype=bool)
+req.get_json('name', data_type=str, min_value=1, max_value=16)  # min/max char length
+req.get_json('age', data_type=int, min_value=18, max_value=99)  # min/max numeric value
+req.get_json('amount', data_type=float, min_value=0.0)
+req.get_json('approved', data_type=bool)
 ```
 * Response `400 Bad Request` is returned if a validation fails containing the error message.
 
@@ -50,7 +52,7 @@ req.get_json('approved', dtype=bool)
 
 ```python
 # make a field optional with default value
-req.get_json('country_code', dtype=str, default="USA", max=3, min=3)
+req.get_json('country_code', data_type=str, default="USA", max=3, min=3)
 
 # custom validation with Regular Expressions
 req.get_json('email', match="[^@]+@[^@]+\.[^@]+")
